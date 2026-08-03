@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+.env
+
+# Databases
+*.db
+*.db-journal
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# Portable tools
+node_portable/
+node_portable22/
+node_portable.zip
+node_portable22.zip
+
+# OS
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+.DS_Store
