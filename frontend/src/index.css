@@ -1,22 +1,34 @@
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  body {
-    @apply bg-[#070b19] text-slate-100 font-sans antialiased overflow-x-hidden;
-    /* Premium layered radial backdrop */
-    background-image: 
-      radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 60%);
-    background-attachment: fixed;
-  }
+@theme {
+  --color-primary-50: #f0f9ff;
+  --color-primary-100: #e0f2fe;
+  --color-primary-200: #bae6fd;
+  --color-primary-300: #7dd3fc;
+  --color-primary-400: #38bdf8;
+  --color-primary-500: #0ea5e9;
+  --color-primary-600: #0284c7;
+  --color-primary-700: #0369a1;
+  --color-primary-800: #075985;
+  --color-primary-900: #0c4a6e;
+  
+  --font-sans: 'Outfit', 'Inter', sans-serif;
 }
 
-/* Glassmorphism Panel Rework */
+body {
+  background-color: #070b19;
+  color: #f8fafc; /* slate-50 equivalent */
+  font-family: 'Outfit', 'Inter', sans-serif;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Glassmorphism Panel */
 .glass-panel {
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(16px);
@@ -38,12 +50,29 @@
 
 /* Custom premium inputs */
 .custom-input {
-  @apply w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all duration-200;
+  width: 100%;
+  background-color: rgba(2, 6, 23, 0.8); /* slate-950 equivalent */
+  border: 1px solid #1e293b; /* slate-800 */
+  border-radius: 1rem; /* rounded-2xl */
+  padding: 0.75rem 1rem;
+  color: #f8fafc;
+  transition: all 0.2s;
 }
 
-/* Custom Select Dropdowns to avoid white defaults */
+.custom-input::placeholder {
+  color: #475569; /* slate-600 */
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: #0ea5e9; /* primary-500 */
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+}
+
+/* Custom Select Dropdowns */
 select.custom-input option {
-  @apply bg-slate-950 text-slate-200;
+  background-color: #020617;
+  color: #e2e8f0;
 }
 
 /* Clinical Prescription Slip styles */

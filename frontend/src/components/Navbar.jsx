@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
-import { Activity, LogOut, Calendar, ShieldAlert, HeartPulse, User } from 'lucide-react';
+import { Activity, LogOut, Calendar, ShieldAlert, User, UserCircle2 } from 'lucide-react';
 
 export const Navbar = () => {
   const { isAuthenticated, role, fullName, logout } = useAuth();
@@ -13,14 +13,12 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-6 py-4">
+    <nav className="sticky top-0 z-50 bg-[#590ce8] border-b border-white/10 px-6 py-4 text-white">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
-        <Link to={isAuthenticated ? '/dashboard' : '/'} className="flex items-center space-x-2 text-white font-extrabold text-2xl tracking-tight">
-          <HeartPulse className="h-8 w-8 text-primary-500 animate-pulse-subtle" />
-          <span className="bg-gradient-to-r from-white via-slate-100 to-primary-400 bg-clip-text text-transparent">
-            CareFlow
-          </span>
+        <Link to={isAuthenticated ? '/dashboard' : '/'} className="flex items-center space-x-2 text-white font-extrabold text-lg tracking-wide">
+          <UserCircle2 className="h-6 w-6 text-white" />
+          <span>GLOBAL HOSPITALS</span>
         </Link>
 
         {/* Navigation Links / Status */}
