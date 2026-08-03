@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import useAppointments from '../hooks/useAppointments';
 import useAuth from '../hooks/useAuth';
 import { 
-  Users, Calendar, Activity, ShieldCheck, HeartPulse, UserCircle2, Shield, Award, ClipboardList, Clock, Search
+  Users, Calendar, Activity, ShieldCheck, HeartPulse, UserCircle2, Shield, Award, ClipboardList, Clock, Search, RefreshCw
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -18,7 +18,6 @@ export const AdminDashboard = () => {
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [apptSearchTerm, setApptSearchTerm] = useState('');
 
-  // Fetch all users in system
   const fetchAllUsers = async () => {
     setUserLoading(true);
     try {
@@ -42,9 +41,8 @@ export const AdminDashboard = () => {
     }
   }, [activeTab]);
 
-  // Analytics helper calculations
+  // Analytics Helpers
   const totalDoctors = users.filter(u => u.role === 'doctor').length || appointments.reduce((acc, appt) => {
-    // Fallback counts if users tab not loaded yet
     if (!acc.includes(appt.doctor_id)) acc.push(appt.doctor_id);
     return acc;
   }, []).length;
@@ -59,12 +57,15 @@ export const AdminDashboard = () => {
   const completedAppts = appointments.filter(a => a.status.toLowerCase() === 'completed').length;
   const activeAppts = appointments.filter(a => ['pending', 'confirmed'].includes(a.status.toLowerCase())).length;
 
+  // Percentage for progress bars
+  const completedPercentage = totalAppts > 0 ? Math.round((completedAppts / totalAppts) * 100) : 0;
+  const pendingPercentage = totalAppts > 0 ? Math.round((pendingAppts / totalAppts) * 100) : 0;
+
   const handleStatusChange = async (apptId, status) => {
     await updateStatus(apptId, status);
     refresh();
   };
 
-  // Filters
   const filteredUsers = users.filter(u => 
     u.full_name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
@@ -78,7 +79,16 @@ export const AdminDashboard = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+    <div className="max-w-7xl mx-auto px-6 py-10 animate-fade-in-up">
+      
+      {/* Header */}
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Admin Operations Console</h1>
+          <p className="text-slate-400 text-sm mt-1">Supervise care networks, user registries, and booking records.</p>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex border-b border-slate-800/80 space-x-6 mb-8">
         <button
@@ -99,7 +109,7 @@ export const AdminDashboard = () => {
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
-          User Directory ({users.length || '...'})
+          User Registry ({users.length || '...'})
         </button>
         <button
           onClick={() => { setActiveTab('appointments'); refresh(); }}
@@ -109,142 +119,155 @@ export const AdminDashboard = () => {
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
-          All Appointments Ledger ({appointments.length})
+          Master Appointments Ledger ({appointments.length})
         </button>
       </div>
 
       {/* --- TAB CONTENT: OPERATIONS ANALYTICS --- */}
       {activeTab === 'analytics' && (
-        <div className="space-y-10 animate-fade-in">
-          {/* Metrics cards grid */}
+        <div className="space-y-8">
+          
+          {/* Stats grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center space-x-4">
-              <div className="bg-primary-500/10 border border-primary-500/20 p-3 rounded-xl">
-                <Users className="h-6 w-6 text-primary-400" />
+            <div className="glass-panel p-6 rounded-2xl flex items-center space-x-4">
+              <div className="bg-primary-500/10 border border-primary-500/20 p-3.5 rounded-2xl shrink-0">
+                <Users className="h-6 w-6 text-primary-400 animate-pulse-glow" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Registered Patients</p>
-                <h3 className="text-3xl font-extrabold text-white mt-1">{totalPatients}</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Patients Registered</p>
+                <h3 className="text-3xl font-extrabold text-white mt-0.5">{totalPatients}</h3>
               </div>
             </div>
 
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center space-x-4">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl">
+            <div className="glass-panel p-6 rounded-2xl flex items-center space-x-4">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 p-3.5 rounded-2xl shrink-0">
                 <Award className="h-6 w-6 text-emerald-400" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Active Doctors</p>
-                <h3 className="text-3xl font-extrabold text-white mt-1">{totalDoctors}</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Physicians Onboarded</p>
+                <h3 className="text-3xl font-extrabold text-white mt-0.5">{totalDoctors}</h3>
               </div>
             </div>
 
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center space-x-4">
-              <div className="bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-xl">
+            <div className="glass-panel p-6 rounded-2xl flex items-center space-x-4">
+              <div className="bg-indigo-500/10 border border-indigo-500/20 p-3.5 rounded-2xl shrink-0">
                 <Calendar className="h-6 w-6 text-indigo-400" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Bookings</p>
-                <h3 className="text-3xl font-extrabold text-white mt-1">{totalAppts}</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Bookings</p>
+                <h3 className="text-3xl font-extrabold text-white mt-0.5">{totalAppts}</h3>
               </div>
             </div>
 
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center space-x-4">
-              <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl">
+            <div className="glass-panel p-6 rounded-2xl flex items-center space-x-4">
+              <div className="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-2xl shrink-0">
                 <Clock className="h-6 w-6 text-amber-400" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Pending Confirmations</p>
-                <h3 className="text-3xl font-extrabold text-white mt-1">{pendingAppts}</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pending Bookings</p>
+                <h3 className="text-3xl font-extrabold text-white mt-0.5">{pendingAppts}</h3>
               </div>
             </div>
           </div>
 
-          {/* Quick status summary */}
+          {/* Progress bar cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4">
+            
+            <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-6">
               <h3 className="text-lg font-bold text-white flex items-center space-x-2">
                 <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                <span>System Operations Status</span>
+                <span>Service Execution Status</span>
               </h3>
+              
               <div className="space-y-4 pt-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Total Consultations Completed:</span>
-                  <span className="text-white font-bold">{completedAppts}</span>
+                {/* Completed appts progress */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-400">Completed consultations</span>
+                    <span className="text-emerald-400 font-bold">{completedPercentage}% ({completedAppts})</span>
+                  </div>
+                  <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                    <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${completedPercentage}%` }} />
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Consultations Pending/Confirmed:</span>
-                  <span className="text-white font-bold">{activeAppts}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Database Engine:</span>
-                  <span className="text-primary-400 font-bold">SQLAlchemy ORM (SQLite / PostgreSQL)</span>
+
+                {/* Pending appts progress */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-400">Pending clinic approvals</span>
+                    <span className="text-amber-400 font-bold">{pendingPercentage}% ({pendingAppts})</span>
+                  </div>
+                  <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                    <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: `${pendingPercentage}%` }} />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="glass-panel p-6 rounded-3xl border border-slate-800 text-center flex flex-col items-center justify-center space-y-3">
-              <HeartPulse className="h-12 w-12 text-primary-500 animate-pulse-subtle" />
-              <h3 className="text-white font-bold text-lg">Hospital Appointment Hub</h3>
-              <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-                Use the tabs above to search system users, monitor active appointments, and confirm or cancel pending schedules directly.
+            <div className="glass-panel p-6 rounded-3xl border border-slate-800 text-center flex flex-col items-center justify-center p-8 space-y-3">
+              <HeartPulse className="h-12 w-12 text-primary-500 animate-pulse-glow" />
+              <h3 className="text-white font-extrabold text-lg">Hospital Operations Node</h3>
+              <p className="text-xs text-slate-450 max-w-sm leading-relaxed">
+                CareFlow administrators hold system overrides. Toggle tabs above to view granular patient metadata or override appointments.
               </p>
             </div>
+
           </div>
         </div>
       )}
 
-      {/* --- TAB CONTENT: USER DIRECTORY --- */}
+      {/* --- TAB CONTENT: USER REGISTRY --- */}
       {activeTab === 'users' && (
-        <div className="space-y-6">
-          <div className="glass-panel p-5 rounded-2xl flex items-center space-x-3">
+        <div className="space-y-6 animate-fade-in-up">
+          <div className="glass-panel p-4 rounded-2xl flex items-center space-x-3">
             <Search className="h-5 w-5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search users by name, email, or role type..."
+              placeholder="Search user directories by email, role, or name..."
               value={userSearchTerm}
               onChange={(e) => setUserSearchTerm(e.target.value)}
-              className="w-full bg-transparent text-sm focus:outline-none placeholder-slate-500"
+              className="w-full bg-transparent text-sm text-slate-200 focus:outline-none placeholder-slate-600"
             />
           </div>
 
-          <div className="glass-panel rounded-3xl overflow-hidden overflow-x-auto">
+          <div className="glass-panel rounded-3xl overflow-hidden overflow-x-auto border border-slate-800">
             {userLoading ? (
-              <p className="p-8 text-center text-slate-400">Loading user registry...</p>
+              <p className="p-8 text-center text-slate-400">Loading directory registries...</p>
             ) : (
-              <table className="w-full text-left text-sm border-collapse min-w-[600px]">
+              <table className="w-full text-left text-sm border-collapse min-w-[700px]">
                 <thead>
-                  <tr className="bg-slate-950/40 border-b border-slate-800/80 text-slate-400 font-bold">
-                    <th className="p-4">User</th>
+                  <tr className="bg-slate-950/50 border-b border-slate-850 text-slate-500 font-bold text-xs uppercase tracking-wider">
+                    <th className="p-4">Staff / Patient Name</th>
                     <th className="p-4">Email</th>
-                    <th className="p-4">Role</th>
-                    <th className="p-4">Profile Details</th>
+                    <th className="p-4">Assigned Role</th>
+                    <th className="p-4">Demographics &amp; Division</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                <tbody className="divide-y divide-slate-900/60 text-slate-300">
                   {filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-800/20">
+                    <tr key={u.id} className="hover:bg-slate-900/10">
                       <td className="p-4 flex items-center space-x-3">
-                        <UserCircle2 className="h-8 w-8 text-slate-500 shrink-0" />
-                        <span className="font-semibold text-white">{u.full_name}</span>
+                        <UserCircle2 className="h-8 w-8 text-slate-600 shrink-0" />
+                        <span className="font-bold text-white text-sm">{u.full_name}</span>
                       </td>
-                      <td className="p-4">{u.email}</td>
+                      <td className="p-4 text-xs font-semibold text-slate-400">{u.email}</td>
                       <td className="p-4">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${
-                          u.role === 'admin' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/15' :
-                          u.role === 'doctor' ? 'bg-primary-500/10 text-primary-400 border border-primary-500/15' :
-                          'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${
+                          u.role === 'admin' ? 'bg-rose-500/10 text-rose-400 border-rose-500/15' :
+                          u.role === 'doctor' ? 'bg-primary-500/10 text-primary-400 border-primary-500/15' :
+                          'bg-emerald-500/10 text-emerald-400 border-emerald-500/15'
                         }`}>
                           {u.role}
                         </span>
                       </td>
-                      <td className="p-4 text-xs max-w-xs truncate">
+                      <td className="p-4 text-xs font-medium text-slate-400">
                         {u.role === 'patient' && u.patient_profile && (
                           <span>Phone: {u.patient_profile.phone || 'N/A'} | DOB: {u.patient_profile.date_of_birth || 'N/A'}</span>
                         )}
                         {u.role === 'doctor' && u.doctor_profile && (
                           <span>Specialization: {u.doctor_profile.specialization} ({u.doctor_profile.experience_years} yrs exp)</span>
                         )}
-                        {u.role === 'admin' && <span className="text-slate-500">System Admin Control</span>}
+                        {u.role === 'admin' && <span className="text-slate-500">Security Clearance Level 1</span>}
                       </td>
                     </tr>
                   ))}
@@ -257,77 +280,77 @@ export const AdminDashboard = () => {
 
       {/* --- TAB CONTENT: ALL APPOINTMENTS LEDGER --- */}
       {activeTab === 'appointments' && (
-        <div className="space-y-6">
-          <div className="glass-panel p-5 rounded-2xl flex items-center space-x-3">
+        <div className="space-y-6 animate-fade-in-up">
+          <div className="glass-panel p-4 rounded-2xl flex items-center space-x-3">
             <Search className="h-5 w-5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search appointments by Patient name, Doctor name, or Status..."
+              placeholder="Search ledger by Patient, Specialist, or Status..."
               value={apptSearchTerm}
               onChange={(e) => setApptSearchTerm(e.target.value)}
-              className="w-full bg-transparent text-sm focus:outline-none placeholder-slate-500"
+              className="w-full bg-transparent text-sm text-slate-200 focus:outline-none placeholder-slate-600"
             />
           </div>
 
-          <div className="glass-panel rounded-3xl overflow-hidden overflow-x-auto">
+          <div className="glass-panel rounded-3xl overflow-hidden overflow-x-auto border border-slate-800">
             {apptLoading ? (
-              <p className="p-8 text-center text-slate-400">Loading ledger...</p>
+              <p className="p-8 text-center text-slate-400">Loading database records...</p>
             ) : (
-              <table className="w-full text-left text-sm border-collapse min-w-[700px]">
+              <table className="w-full text-left text-sm border-collapse min-w-[800px]">
                 <thead>
-                  <tr className="bg-slate-950/40 border-b border-slate-800/80 text-slate-400 font-bold">
-                    <th className="p-4">ID</th>
-                    <th className="p-4">Patient</th>
-                    <th className="p-4">Doctor</th>
-                    <th className="p-4">Schedule (Date / Time)</th>
+                  <tr className="bg-slate-950/50 border-b border-slate-850 text-slate-500 font-bold text-xs uppercase tracking-wider">
+                    <th className="p-4">Record ID</th>
+                    <th className="p-4">Patient Profile</th>
+                    <th className="p-4">Medical Specialist</th>
+                    <th className="p-4">Calendar &amp; Hour</th>
                     <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
+                    <th className="p-4 text-right">System Overrides</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                <tbody className="divide-y divide-slate-900/60 text-slate-350">
                   {filteredAppts.map((appt) => (
-                    <tr key={appt.id} className="hover:bg-slate-800/20">
-                      <td className="p-4 font-mono font-bold text-slate-500">#{appt.id}</td>
-                      <td className="p-4 text-white font-medium">{appt.patient?.user.full_name}</td>
-                      <td className="p-4">Dr. {appt.doctor?.user.full_name}</td>
+                    <tr key={appt.id} className="hover:bg-slate-900/10">
+                      <td className="p-4 font-mono font-bold text-slate-550 text-xs">#{appt.id}</td>
+                      <td className="p-4 text-white font-bold text-sm">{appt.patient?.user.full_name}</td>
+                      <td className="p-4 text-xs font-semibold text-slate-300">Dr. {appt.doctor?.user.full_name}</td>
                       <td className="p-4">
-                        <span className="font-semibold text-slate-200">{appt.date}</span>
-                        <span className="text-slate-500 text-xs block mt-0.5">{appt.time.substring(0, 5)}</span>
+                        <span className="font-bold text-slate-200 text-xs">{appt.date}</span>
+                        <span className="text-slate-500 text-[10px] block mt-0.5">{appt.time.substring(0, 5)}</span>
                       </td>
                       <td className="p-4">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                          appt.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                          appt.status === 'confirmed' ? 'bg-primary-500/10 text-primary-400 border-primary-500/20' :
-                          appt.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                          'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${
+                          appt.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/15' :
+                          appt.status === 'confirmed' ? 'bg-sky-500/10 text-sky-400 border-sky-500/15' :
+                          appt.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/15' :
+                          'bg-rose-500/10 text-rose-400 border-rose-500/15'
                         }`}>
                           {appt.status}
                         </span>
                       </td>
-                      <td className="p-4 text-right space-x-2">
+                      <td className="p-4 text-right space-x-2 shrink-0">
                         {['pending', 'confirmed'].includes(appt.status.toLowerCase()) && (
                           <>
                             {appt.status.toLowerCase() === 'pending' && (
                               <button
                                 onClick={() => handleStatusChange(appt.id, 'confirmed')}
-                                className="bg-primary-600 hover:bg-primary-500 text-white rounded-lg px-2.5 py-1 text-xs font-bold transition-all"
+                                className="bg-primary-600 hover:bg-primary-500 text-white rounded-xl px-3 py-1.5 text-xs font-bold transition-all"
                               >
                                 Confirm
                               </button>
                             )}
                             <button
                               onClick={() => handleStatusChange(appt.id, 'cancelled')}
-                              className="bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all"
+                              className="bg-rose-500/10 hover:bg-rose-500 text-rose-450 hover:text-white border border-rose-500/15 rounded-xl px-3 py-1.5 text-xs font-bold transition-all"
                             >
                               Cancel
                             </button>
                           </>
                         )}
-                        {appt.status.toLowerCase() === 'completed' && appt.prescription && (
-                          <span className="text-xs text-slate-500 font-medium">Record Closed</span>
+                        {appt.status.toLowerCase() === 'completed' && (
+                          <span className="text-xs text-slate-500 font-semibold italic">Session Closed</span>
                         )}
                         {appt.status.toLowerCase() === 'cancelled' && (
-                          <span className="text-xs text-rose-500/50 font-medium">Archived</span>
+                          <span className="text-xs text-rose-500/40 font-semibold">Cancelled</span>
                         )}
                       </td>
                     </tr>
@@ -338,6 +361,7 @@ export const AdminDashboard = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };
